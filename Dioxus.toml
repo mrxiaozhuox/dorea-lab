@@ -1,11 +1,11 @@
 [application]
 
 # App (Project) Name
-name = "{{project-name}}"
+name = "dorea-cli"
 
 # Dioxus App Support Platform
 # desktop, web, mobile, ssr
-platforms = ["web", "desktop"]
+platforms = ["desktop"]
 
 # `build` & `serve` dist path
 out_dir = "dist"
