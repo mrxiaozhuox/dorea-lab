@@ -7,7 +7,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dioxus = { git = "https://github.com/dioxuslabs/dioxus", features = ["desktop", "router"] }
+dioxus = { git = "https://github.com/dioxuslabs/dioxus", features = ["desktop"] }
+dioxus-heroicons = "0.1.0"
+
 dorea = { git = "https://github.com/mrxiaozhuox/dorea", features = ["client"] }
+
 serde = { version = "1.0.131", features = ["derive"] }
 log = "0.4.6"
+
+[patch.crates-io]
+dioxus = { git = 'https://github.com/dioxuslabs/dioxus' }
