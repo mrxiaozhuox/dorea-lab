@@ -1,10 +1,15 @@
 use dioxus::prelude::*;
 use dioxus_heroicons::{Icon, solid::Shape};
+use fermi::use_set;
+
+use crate::{ROUTER, RouterState};
 
 #[inline_props]
-pub fn TopBar<'a>(cx: Scope, path: &'a UseState<String>) -> Element {
+pub fn TopBar(cx: Scope) -> Element {
 
     let win = dioxus::desktop::use_window(&cx);
+
+    let set_route = use_set(&cx, ROUTER);
 
     cx.render(rsx!(
         nav {
@@ -40,7 +45,9 @@ pub fn TopBar<'a>(cx: Scope, path: &'a UseState<String>) -> Element {
                         class: "navbar-item",
                         onmousedown: |e| { e.cancel_bubble(); },
                         onclick: move |_| {
-                            path.modify(|_| String::from("dashboard") );
+                            set_route(RouterState {
+                                path: "dashboard".into()
+                            });
                         },
                         "dashboard",
                     }
