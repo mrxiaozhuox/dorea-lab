@@ -24,9 +24,9 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn open(addr: String, account: Account) -> anyhow::Result<Self> {
+    pub fn open(addr: &str, account: Account) -> anyhow::Result<Self> {
         let option = ClientOption {
-            addr,
+            addr: addr.to_string(),
             account,
             main_db: String::from("default"),
         };
@@ -136,10 +136,29 @@ impl Client {
     pub fn setex(&mut self, key: &str, value: DataValue, expire: usize) -> anyhow::Result<()> {
         let command = format!("set {} {} {}", key, value.to_string(), expire);
 
-        let _ = self.execute(&command)?;
+        let res = self.execute(&command)?;
 
-        Ok(())
+        if res == "" {
+            return Ok(());
+        } else {
+            return Err(anyhow::anyhow!(res.clone()));
+        }
     }
+
+    pub fn set(&mut self, key: &str, value: DataValue) -> anyhow::Result<()> {
+        self.setex(key, value, 0)
+    }
+
+    pub fn delete(&mut self, key: &str) -> bool {
+        let res = self.execute(&format!("delete {}", key));
+        res.is_ok()
+    }
+
+    pub fn clean(&mut self) -> bool {
+        let res = self.execute("clean");
+        res.is_ok()
+    }
+
 }
 
 #[derive(Clone, Debug)]

@@ -5,16 +5,14 @@ mod database;
 
 use comp::*;
 use dioxus::prelude::*;
-use fermi::{Atom, use_read, use_set};
+use fermi::{use_read, use_set, Atom};
 
 struct RouterState {
-    path: String
+    path: String,
 }
 
-static ROUTER: Atom<RouterState> = |_| {
-    RouterState {
-        path: String::from("dashboard")
-    }
+static ROUTER: Atom<RouterState> = |_| RouterState {
+    path: String::from("dashboard"),
 };
 
 fn main() {
@@ -30,7 +28,6 @@ fn main() {
 }
 
 fn app(cx: Scope) -> Element {
-
     let router = use_read(&cx, ROUTER);
 
     let body = match router.path.as_str() {
@@ -58,10 +55,8 @@ fn app(cx: Scope) -> Element {
 }
 
 fn Dashboard<'a>(cx: Scope<'a>) -> Element {
-
-    let tcp_conn = use_state(&cx, || true);
-    let hostname_state = use_state(&cx, || "127.0.0.1".to_string());
-    let port_state = use_state(&cx, || 3450_u16);
+    let addr_state = use_state(&cx, || "http://127.0.0.1:3451/".to_string());
+    let username_state = use_state(&cx, || "master".to_string());
     let password_state = use_state(&cx, || "".to_string());
 
     cx.render(rsx!(
@@ -72,22 +67,16 @@ fn Dashboard<'a>(cx: Scope<'a>) -> Element {
                 div {
                     class: "columns",
                     div {
-                        class: "column is-2",
-                        div {
-                            class: "select is-fullwidth",
-                            select {
-                                if *tcp_conn.0 {
-                                    cx.render(rsx!(
-                                        option { selected: "true", "TCP" },
-                                        option { "HTTP" }
-                                    ))
-                                } else {
-                                    cx.render(rsx!(
-                                        option { "TCP" },
-                                        option { selected: "true", "HTTP" }
-                                    ))
-                                }
-                            }
+                        class: "column is-4",
+                        input {
+                            class: "input is-info",
+                            r#type: "text",
+                            placeholder: "Hostname",
+                            value: "{addr_state.0}",
+                            oninput: move |v| {
+                                addr_state.1.modify(|_| v.value.clone());
+                            },
+                            style: "font-weight:bold;",
                         }
                     }
                     div {
@@ -95,23 +84,10 @@ fn Dashboard<'a>(cx: Scope<'a>) -> Element {
                         input {
                             class: "input is-info",
                             r#type: "text",
-                            placeholder: "Hostname",
-                            value: "{hostname_state.0}",
+                            placeholder: "Username",
+                            value: "{username_state.0}",
                             oninput: move |v| {
-                                hostname_state.1.modify(|_| v.value.clone());
-                            },
-                            style: "font-weight:bold;",
-                        }
-                    }
-                    div {
-                        class: "column is-2",
-                        input {
-                            class: "input is-info",
-                            r#type: "number",
-                            placeholder: "Port",
-                            value: "{port_state.0}",
-                            oninput: move |v| {
-                                port_state.1.modify(|_| v.value.parse::<u16>().unwrap_or(3450));
+                                username_state.1.modify(|_| v.value.clone());
                             },
                             style: "font-weight:bold;",
                         }
@@ -134,13 +110,18 @@ fn Dashboard<'a>(cx: Scope<'a>) -> Element {
                         button {
                             class: "button is-fullwidth is-info",
                             onclick: move |_| {
-                                
-                                let addr = (
-                                    hostname_state.0.to_string(),
-                                    *port_state.0
-                                );
+
+                                let addr = addr_state.0.clone();
+                                let username = username_state.0.clone();
                                 let password = password_state.0.clone();
+                                
                                 let set_route = use_set(&cx, ROUTER).clone();
+
+                                if database::try_connect(&addr, (&username, &password)) {
+                                    set_route(RouterState {
+                                        path: "manager".into(),
+                                    })
+                                }
                             },
                             "Connect"
                         }
