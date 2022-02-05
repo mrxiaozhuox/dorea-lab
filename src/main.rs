@@ -2,11 +2,16 @@
 
 mod comp;
 mod database;
+mod lang;
 
 use comp::*;
 use dioxus::prelude::*;
 use dorea_wsc::{Account, Client};
 use fermi::{use_read, use_set, Atom};
+
+struct LangShared {
+    lang: LangMap,
+}
 
 struct RouterState {
     path: String,
@@ -18,16 +23,18 @@ struct ConnectState {
 }
 
 static ROUTER: Atom<RouterState> = |_| RouterState {
-    path: String::from("dashboard"),
+    path: String::from("connector"),
 };
 
 static CONNECT: Atom<Option<ConnectState>> = |_| None;
+
+const DEFAULT_LANGUAGE: &str = "zh_cn";
 
 fn main() {
     use dioxus::desktop::tao::dpi::LogicalSize;
     dioxus::desktop::launch_cfg(app, |cfg| {
         cfg.with_window(|w| {
-            w.with_title("Dioxus Lab | ⛺")
+            w.with_title("Dorea Lab | ⛺")
                 .with_resizable(true)
                 .with_inner_size(LogicalSize::new(1050.0, 650.0))
                 .with_decorations(false)
@@ -36,10 +43,15 @@ fn main() {
 }
 
 fn app(cx: Scope) -> Element {
+
     let router = use_read(&cx, ROUTER);
 
+    let lang = DEFAULT_LANGUAGE.to_string();
+
+    cx.use_hook(|_| { cx.provide_context(LangShared { lang }) });
+
     let body = match router.path.as_str() {
-        "dashboard" => Dashboard(cx),
+        "connector" => Connector(cx),
         _ => cx.render(rsx!(
             h1 { "404 Not found" }
         )),
@@ -62,16 +74,27 @@ fn app(cx: Scope) -> Element {
     ))
 }
 
-fn Dashboard<'a>(cx: Scope<'a>) -> Element {
+fn Connector(cx: Scope) -> Element {
     let addr_state = use_state(&cx, || "http://127.0.0.1:3451/".to_string());
     let username_state = use_state(&cx, || "master".to_string());
     let password_state = use_state(&cx, || "".to_string());
+
+    let lang = cx.consume_context::<LangShared>().unwrap();
+    let lang = lang.lang;
 
     cx.render(rsx!(
         div {
             class: "card",
             div {
                 class: "card-content",
+                article {
+                    class: "message is-small is-info",
+                    div {
+                        class: "message-body",
+                        "You can use this tool to connect"
+                    }
+                }
+                // br {}
                 div {
                     class: "columns",
                     div {
@@ -124,16 +147,26 @@ fn Dashboard<'a>(cx: Scope<'a>) -> Element {
                                 let password = password_state.0.clone();
 
                                 let set_route = use_set(&cx, ROUTER).clone();
+                                let set_connect = use_set(&cx, CONNECT).clone();
 
                                 cx.spawn(async move {
                                     if database::try_connect(&addr, (&username, &password)).await {
+
+                                        let account = Account::new(username.clone(), password.clone());
+
+                                        set_connect(Some(ConnectState {
+                                            client: Client::open(&addr, account.clone()).await.unwrap(),
+                                            account,
+                                        }));
+
+                                        // 跳转到 管理页面
                                         set_route(RouterState {
-                                            path: "manager".to_string(),
+                                            path: "dashboard".to_string(),
                                         });
                                     }
                                 })
                             },
-                            "Connect"
+                            "{}"
                         }
                     }
                 }
