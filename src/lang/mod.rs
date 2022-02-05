@@ -1,8 +1,12 @@
-use std::fmt::Display;
-
-pub mod zh_cn;
 pub mod en;
+pub mod zh_cn;
 
-pub fn lang<T: Display>(lang: &'static str) -> T {
-    zh_cn::Items
+pub fn load(lang: &str, name: &str) -> String {
+    if lang == "en" {
+        let temp = en::load(name);
+        if &temp != "__UNKNOWN__" {
+            return temp;
+        }
+    }
+    zh_cn::load(name)
 }

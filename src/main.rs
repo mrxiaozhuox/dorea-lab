@@ -9,8 +9,10 @@ use dioxus::prelude::*;
 use dorea_wsc::{Account, Client};
 use fermi::{use_read, use_set, Atom};
 
+use crate::lang::load as load_text;
+
 struct LangShared {
-    lang: LangMap,
+    lang: String,
 }
 
 struct RouterState {
@@ -80,7 +82,7 @@ fn Connector(cx: Scope) -> Element {
     let password_state = use_state(&cx, || "".to_string());
 
     let lang = cx.consume_context::<LangShared>().unwrap();
-    let lang = lang.lang;
+    let lang = &lang.lang;
 
     cx.render(rsx!(
         div {
@@ -88,10 +90,10 @@ fn Connector(cx: Scope) -> Element {
             div {
                 class: "card-content",
                 article {
-                    class: "message is-small is-info",
+                    class: "message is-info",
                     div {
                         class: "message-body",
-                        "You can use this tool to connect"
+                        [ load_text(lang, "connector:connect_prompt_message") ]
                     }
                 }
                 // br {}
@@ -166,7 +168,7 @@ fn Connector(cx: Scope) -> Element {
                                     }
                                 })
                             },
-                            "{}"
+                            [ crate::lang::load(lang, "connect") ]
                         }
                     }
                 }

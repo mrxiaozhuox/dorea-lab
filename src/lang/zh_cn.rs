@@ -1,26 +1,10 @@
-use std::fmt::Display;
-
-#[derive(Debug, Clone)]
-pub struct Values {
-    pub inner: Items,
-}
-
-impl Display for Values {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.inner)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Items {
-    ConnectButton,
-}
-
-impl Display for Items {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let c = match self {
-            Items::ConnectButton => "连接",
-        };
-        write!(f, "{}", c)
-    }
+#[allow(clippy::match_str_case_mismatch)]
+pub fn load(name: &str) -> String {
+    println!("SB: {}", name);
+    let v = match name.to_lowercase().as_str() {
+        "connect" => "连接",
+        "connector:connect_prompt_message" => "请将用于 `Web-Serivce` 连接的信息填写至此。【URL、用户名、密码】",
+        _ => "__UNKNOWN__",
+    };
+    v.to_string()
 }

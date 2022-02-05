@@ -24,7 +24,7 @@ pub fn TopBar(cx: Scope) -> Element {
                 a {
                     class: "navbar-item",
                     href: "#",
-                    strong { "DoreaDB" }
+                    strong { "Dorea Lab" }
                 }
                 a {
                     class: "navbar-burger",
