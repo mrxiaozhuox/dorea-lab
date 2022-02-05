@@ -5,15 +5,23 @@ mod database;
 
 use comp::*;
 use dioxus::prelude::*;
+use dorea_wsc::{Account, Client};
 use fermi::{use_read, use_set, Atom};
 
 struct RouterState {
     path: String,
 }
 
+struct ConnectState {
+    account: Account,
+    client: Client,
+}
+
 static ROUTER: Atom<RouterState> = |_| RouterState {
     path: String::from("dashboard"),
 };
+
+static CONNECT: Atom<Option<ConnectState>> = |_| None;
 
 fn main() {
     use dioxus::desktop::tao::dpi::LogicalSize;
@@ -114,14 +122,16 @@ fn Dashboard<'a>(cx: Scope<'a>) -> Element {
                                 let addr = addr_state.0.clone();
                                 let username = username_state.0.clone();
                                 let password = password_state.0.clone();
-                                
+
                                 let set_route = use_set(&cx, ROUTER).clone();
 
-                                if database::try_connect(&addr, (&username, &password)) {
-                                    set_route(RouterState {
-                                        path: "manager".into(),
-                                    })
-                                }
+                                cx.spawn(async move {
+                                    if database::try_connect(&addr, (&username, &password)).await {
+                                        set_route(RouterState {
+                                            path: "manager".to_string(),
+                                        });
+                                    }
+                                })
                             },
                             "Connect"
                         }
