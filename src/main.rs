@@ -92,6 +92,8 @@ fn Connector(cx: Scope) -> Element {
         ("info".to_string(), load_text(&lang, "connector:connect_prompt_message"))
     });
 
+    let btn_disabled = use_state(&cx, || "false".to_string());
+
     cx.render(rsx!(
         div {
             class: "card",
@@ -149,6 +151,7 @@ fn Connector(cx: Scope) -> Element {
                         class: "column is-2",
                         button {
                             class: "button is-fullwidth is-info",
+                            disabled: "{btn_disabled.0}",
                             onclick: move |_| {
 
                                 let addr = addr_state.0.clone();
@@ -162,8 +165,12 @@ fn Connector(cx: Scope) -> Element {
                                 
                                 let message_setter = message_setter.clone();
 
+                                let btn_disabled_setter = btn_disabled.1.clone();
+
+                                btn_disabled_setter("true".into());
+
                                 cx.spawn(async move {
-                                    println!("请等待连接！");
+                                    // println!("请等待连接！");
                                     match database::try_connect(&addr, (&username, &password)).await {
                                         Ok(_) => {
                                             let account = Account::new(username.clone(), password.clone());
@@ -189,6 +196,7 @@ fn Connector(cx: Scope) -> Element {
                                             message_setter(("danger".into(), message));
                                         }
                                     }
+                                    btn_disabled_setter("false".into());
                                 })
                             },
                             [ crate::lang::load(&lang, "connect") ]

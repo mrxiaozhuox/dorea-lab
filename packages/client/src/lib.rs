@@ -42,17 +42,20 @@ impl Client {
             current: option.main_db,
         };
 
-        if obj.reconnect().await.is_err() {
-            return Err(anyhow::anyhow!("account check failed."));
+        if &obj.config.addr[obj.config.addr.len() - 1..] != "/" {
+            obj.config.addr += "/";
         }
+
+        // if let Err(e) = obj.reconnect().await {
+        //     return Err(anyhow::anyhow!("account check failed."));
+        // }
+        
+        obj.reconnect().await?;
 
         Ok(obj)
     }
 
     pub async fn reconnect(&mut self) -> anyhow::Result<()> {
-        if &self.config.addr[self.config.addr.len() - 1..] != "/" {
-            self.config.addr += "/";
-        }
 
         // 这里需要测试连接的状态（即本次连接是否可以被通过
         let url = self.config.addr.clone() + "auth";
