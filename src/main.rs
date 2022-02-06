@@ -17,6 +17,7 @@ struct LangShared {
 
 struct RouterState {
     path: String,
+    message: String,
 }
 
 struct ConnectState {
@@ -26,6 +27,7 @@ struct ConnectState {
 
 static ROUTER: Atom<RouterState> = |_| RouterState {
     path: String::from("connector"),
+    message: String::new(),
 };
 
 static CONNECT: Atom<Option<ConnectState>> = |_| None;
@@ -54,6 +56,7 @@ fn app(cx: Scope) -> Element {
 
     let body = match router.path.as_str() {
         "connector" => Connector(cx),
+        "failed" => Failed(cx, router.message.clone()),
         _ => cx.render(rsx!(
             h1 { "404 Not found" }
         )),
@@ -81,8 +84,8 @@ fn Connector(cx: Scope) -> Element {
     let username_state = use_state(&cx, || "master".to_string());
     let password_state = use_state(&cx, || "".to_string());
 
-    let lang = cx.consume_context::<LangShared>().unwrap();
-    let lang = &lang.lang;
+    let lang_shared = cx.consume_context::<LangShared>().unwrap();
+    let lang = lang_shared.lang.clone();
 
     cx.render(rsx!(
         div {
@@ -93,10 +96,9 @@ fn Connector(cx: Scope) -> Element {
                     class: "message is-info",
                     div {
                         class: "message-body",
-                        [ load_text(lang, "connector:connect_prompt_message") ]
+                        [ load_text(&lang, "connector:connect_prompt_message") ]
                     }
                 }
-                // br {}
                 div {
                     class: "columns",
                     div {
@@ -151,28 +153,42 @@ fn Connector(cx: Scope) -> Element {
                                 let set_route = use_set(&cx, ROUTER).clone();
                                 let set_connect = use_set(&cx, CONNECT).clone();
 
+                                let lang_info = lang_shared.lang.clone();
                                 cx.spawn(async move {
-                                    if database::try_connect(&addr, (&username, &password)).await {
+                                    match database::try_connect(&addr, (&username, &password)).await {
+                                        Ok(_) => {
+                                            let account = Account::new(username.clone(), password.clone());
 
-                                        let account = Account::new(username.clone(), password.clone());
-
-                                        set_connect(Some(ConnectState {
-                                            client: Client::open(&addr, account.clone()).await.unwrap(),
-                                            account,
-                                        }));
-
-                                        // 跳转到 管理页面
-                                        set_route(RouterState {
-                                            path: "dashboard".to_string(),
-                                        });
+                                            set_connect(Some(ConnectState {
+                                                client: Client::open(&addr, account.clone()).await.unwrap(),
+                                                account,
+                                            }));
+    
+                                            // 跳转到 管理页面
+                                            set_route(RouterState {
+                                                path: "dashboard".to_string(),
+                                                message: String::new(),
+                                            });
+                                        }
+                                        Err(e) => {
+                                            // 这里会更换 message 为 error 并显示连接错误的内容
+                                        }
                                     }
                                 })
                             },
-                            [ crate::lang::load(lang, "connect") ]
+                            [ crate::lang::load(&lang, "connect") ]
                         }
                     }
                 }
             }
+        }
+    ))
+}
+
+fn Failed(cx: Scope, message: String) -> Element {
+    cx.render(rsx!(
+        div {
+            dangerous_inner_html: "{message}",
         }
     ))
 }

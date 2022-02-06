@@ -64,19 +64,33 @@ impl Client {
 
         let client = reqwest::Client::new();
         let result = client.post(url).form(&params).send().await?;
-        let data = result.json::<Value>().await?;
+        let data = result.json::<RespStruct>().await?;
 
-        let v = data.as_object().unwrap();
+        // let v = data.as_object().unwrap();
 
-        let token = v
-            .get("data")
-            .unwrap()
+        // 接口请求失败
+        if data.alpha != "OK" {
+            return Err(anyhow::anyhow!(data.message));
+        }
+
+        let token = data
+            .data
             .as_object()
             .unwrap()
             .get("token")
             .unwrap()
             .as_str()
             .unwrap();
+
+        // let token = v
+        //     .get("data")
+        //     .unwrap()
+        //     .as_object()
+        //     .unwrap()
+        //     .get("token")
+        //     .unwrap()
+        //     .as_str()
+        //     .unwrap();
 
         self.token = token.to_string();
 
@@ -176,7 +190,7 @@ impl BlockingClient {
 
         Self::open_from_option(option)
     }
-    
+
     pub fn open_from_option(option: ClientOption) -> anyhow::Result<Self> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
