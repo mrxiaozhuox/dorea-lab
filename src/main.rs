@@ -87,16 +87,21 @@ fn Connector(cx: Scope) -> Element {
     let lang_shared = cx.consume_context::<LangShared>().unwrap();
     let lang = lang_shared.lang.clone();
 
+    // 这里用于更新 Connector 消息页面的内容
+    let (message, message_setter) = use_state(&cx, || {
+        ("info".to_string(), load_text(&lang, "connector:connect_prompt_message"))
+    });
+
     cx.render(rsx!(
         div {
             class: "card",
             div {
                 class: "card-content",
                 article {
-                    class: "message is-info",
+                    class: "message is-{message.0}",
                     div {
                         class: "message-body",
-                        [ load_text(&lang, "connector:connect_prompt_message") ]
+                        "{message.1}",
                     }
                 }
                 div {
@@ -154,7 +159,11 @@ fn Connector(cx: Scope) -> Element {
                                 let set_connect = use_set(&cx, CONNECT).clone();
 
                                 let lang_info = lang_shared.lang.clone();
+                                
+                                let message_setter = message_setter.clone();
+
                                 cx.spawn(async move {
+                                    println!("请等待连接！");
                                     match database::try_connect(&addr, (&username, &password)).await {
                                         Ok(_) => {
                                             let account = Account::new(username.clone(), password.clone());
@@ -172,6 +181,12 @@ fn Connector(cx: Scope) -> Element {
                                         }
                                         Err(e) => {
                                             // 这里会更换 message 为 error 并显示连接错误的内容
+                                            let message = format!(
+                                                "{}[ {} ]", 
+                                                load_text(&lang_info, "failed:connect_error"),
+                                                e
+                                            );
+                                            message_setter(("danger".into(), message));
                                         }
                                     }
                                 })
