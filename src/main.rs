@@ -23,7 +23,7 @@ struct RouterState {
     message: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct ConnectState {
     account: Account,
     client: Client,
@@ -54,18 +54,21 @@ fn main() {
 fn app(cx: Scope) -> Element {
 
     let router = use_read(&cx, ROUTER);
+    let client = use_read(&cx, CONNECT).clone();
 
     let lang = DEFAULT_LANGUAGE.to_string();
 
     cx.use_hook(|_| { cx.provide_context(LangShared { lang }) });
 
     let body = match router.path.as_str() {
-        "connector" => Connector(cx),
-        "dashboard" => Dashboard(cx),
-        "failed" => Failed(cx, router.message.clone()),
-        _ => cx.render(rsx!(
+        "connector" => rsx!( Connector {} ),
+        "dashboard" => {
+            rsx!( Dashboard { client: client.unwrap() } )
+        },
+        "failed" => rsx!(Failed { message: router.message.clone() }),
+        _ => rsx!(
             h1 { "404 Not found" }
-        )),
+        ),
     };
 
     cx.render(rsx! (
@@ -85,28 +88,17 @@ fn app(cx: Scope) -> Element {
     ))
 }
 
-fn Dashboard(cx: Scope) -> Element {
-
+#[inline_props]
+fn Dashboard(cx: Scope, client: ConnectState) -> Element {
+    
     let lang_shared = cx.consume_context::<LangShared>().unwrap();
     let lang = lang_shared.lang.clone();
 
-    let client = use_read(&cx, CONNECT);
+    let addr = client.client.addr();
 
-    // let set_route = use_set(&cx, ROUTER).clone();
+    let (username, password) = (&client.account.username, &client.account.password);
 
-    // if client.is_none() {
-    //     set_route(RouterState {
-    //         path: "failed".into(),
-    //         message: load_text(&lang, "failed:connect_not_found")
-    //     });
-    // }
-    // let client = client.unwrap();
-
-    // let addr = client.client.addr();
-
-    // let (username, password) = (&client.account.username, &client.account.password);
-
-    // storage::save_conenct_history(&addr, (username, password)).unwrap();
+    storage::save_conenct_history(&addr, (username, password)).unwrap();
     cx.render(rsx!(
         div {
             "123",
@@ -114,6 +106,7 @@ fn Dashboard(cx: Scope) -> Element {
     ))
 }
 
+#[inline_props]
 fn Connector(cx: Scope) -> Element {
     let addr_state = use_state(&cx, || "http://127.0.0.1:3451/".to_string());
     let username_state = use_state(&cx, || "master".to_string());
@@ -243,6 +236,7 @@ fn Connector(cx: Scope) -> Element {
     ))
 }
 
+#[inline_props]
 fn Failed(cx: Scope, message: String) -> Element {
     cx.render(rsx!(
         div {

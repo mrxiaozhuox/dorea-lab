@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::runtime::Runtime;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ClientOption {
     pub addr: String,
     pub account: Account,
@@ -18,7 +18,7 @@ struct RespStruct {
     resptime: u64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Client {
     config: ClientOption,
     token: String,
@@ -233,7 +233,7 @@ impl BlockingClient {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Account {
     pub username: String,
     pub password: String,
