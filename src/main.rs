@@ -3,6 +3,9 @@
 mod comp;
 mod database;
 mod lang;
+mod storage;
+
+use std::process::exit;
 
 use comp::*;
 use dioxus::prelude::*;
@@ -20,6 +23,7 @@ struct RouterState {
     message: String,
 }
 
+#[derive(Debug, Clone)]
 struct ConnectState {
     account: Account,
     client: Client,
@@ -36,6 +40,7 @@ const DEFAULT_LANGUAGE: &str = "zh_cn";
 
 fn main() {
     use dioxus::desktop::tao::dpi::LogicalSize;
+    crate::storage::init_dir().unwrap();
     dioxus::desktop::launch_cfg(app, |cfg| {
         cfg.with_window(|w| {
             w.with_title("Dorea Lab | ⛺")
@@ -56,6 +61,7 @@ fn app(cx: Scope) -> Element {
 
     let body = match router.path.as_str() {
         "connector" => Connector(cx),
+        "dashboard" => Dashboard(cx),
         "failed" => Failed(cx, router.message.clone()),
         _ => cx.render(rsx!(
             h1 { "404 Not found" }
@@ -76,6 +82,35 @@ fn app(cx: Scope) -> Element {
         }
 
         script { [ include_str!("./assets/app.js") ] }
+    ))
+}
+
+fn Dashboard(cx: Scope) -> Element {
+
+    let lang_shared = cx.consume_context::<LangShared>().unwrap();
+    let lang = lang_shared.lang.clone();
+
+    let client = use_read(&cx, CONNECT);
+
+    // let set_route = use_set(&cx, ROUTER).clone();
+
+    // if client.is_none() {
+    //     set_route(RouterState {
+    //         path: "failed".into(),
+    //         message: load_text(&lang, "failed:connect_not_found")
+    //     });
+    // }
+    // let client = client.unwrap();
+
+    // let addr = client.client.addr();
+
+    // let (username, password) = (&client.account.username, &client.account.password);
+
+    // storage::save_conenct_history(&addr, (username, password)).unwrap();
+    cx.render(rsx!(
+        div {
+            "123",
+        }
     ))
 }
 

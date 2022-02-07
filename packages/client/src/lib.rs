@@ -18,6 +18,7 @@ struct RespStruct {
     resptime: u64,
 }
 
+#[derive(Debug, Clone)]
 pub struct Client {
     config: ClientOption,
     token: String,
@@ -49,14 +50,17 @@ impl Client {
         // if let Err(e) = obj.reconnect().await {
         //     return Err(anyhow::anyhow!("account check failed."));
         // }
-        
+
         obj.reconnect().await?;
 
         Ok(obj)
     }
 
-    pub async fn reconnect(&mut self) -> anyhow::Result<()> {
+    pub fn addr(&self) -> String {
+        self.config.addr.to_string()
+    }
 
+    pub async fn reconnect(&mut self) -> anyhow::Result<()> {
         // 这里需要测试连接的状态（即本次连接是否可以被通过
         let url = self.config.addr.clone() + "auth";
 
@@ -76,14 +80,36 @@ impl Client {
             return Err(anyhow::anyhow!(data.message));
         }
 
-        let token = data
-            .data
-            .as_object()
-            .unwrap()
-            .get("token")
-            .unwrap()
-            .as_str()
-            .unwrap();
+        let values = data.data.as_object().unwrap();
+        let token = values.get("token").unwrap().as_str().unwrap();
+
+        // println!("{:?}", values);
+
+        let username = self.config.account.username.clone();
+
+        // 这里会检测数据库允许使用的列表，如果 Default 并未在行列之中，则随机选择一个作为默认连接目标。
+        let usa_db = values.get("usa_db").unwrap().as_array().unwrap();
+        let default_db = if usa_db.contains(&Value::String("default".into())) {
+            String::from("default")
+        } else if usa_db.contains(&Value::String(username.clone())) {
+            String::from(&username)
+        } else {
+            if usa_db.len() >= 1 {
+                String::from(usa_db.get(usa_db.len() - 1).unwrap().as_str().unwrap())
+            } else {
+                String::from("default")
+            }
+        };
+
+        // 如果当前库并不被支持，则自动将其转换为 default
+        if self.current != default_db
+            && !usa_db.contains(&Value::String(self.current.clone()))
+            && usa_db.len() >= 1
+        {
+            self.current = default_db;
+        }
+
+        // println!("current: {}", self.current);
 
         // let token = v
         //     .get("data")
@@ -209,8 +235,8 @@ impl BlockingClient {
 
 #[derive(Clone, Debug)]
 pub struct Account {
-    username: String,
-    password: String,
+    pub username: String,
+    pub password: String,
 }
 
 impl Account {

@@ -7,6 +7,7 @@ pub fn load(name: &str) -> String {
         "connector:connect_prompt_message" => "请将用于 `Web-Serivce` 连接的信息填写至此。【URL、用户名、密码】",
         
         "failed:connect_error" => "数据库连接错误：",
+        "failed:connect_not_found" => "数据库连接状态错误",
         
         _ => "__UNKNOWN__",
     };
