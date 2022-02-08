@@ -31,7 +31,7 @@ pub struct ConnectHistoryInfo {
     pub addr: String,
     pub username: String,
     pub password: String,
-    date: String,
+    pub date: String,
 }
 
 pub fn save_conenct_history(addr: &str, account: (&str, &str)) -> anyhow::Result<()> {
@@ -59,7 +59,7 @@ pub fn save_conenct_history(addr: &str, account: (&str, &str)) -> anyhow::Result
         content = serde_json::from_str::<Vec<ConnectHistoryInfo>>(&buffer)?;
     }
 
-    if content.len() >= 10 {
+    if content.len() >= 5 {
         content.remove(0);
     }
 
@@ -86,5 +86,16 @@ pub fn load_connect_history() -> Vec<ConnectHistoryInfo> {
         return vec![];
     }
 
-    todo!()
+    let file = File::open(current_path.join("data").join("connect-history.json"));
+    if file.is_err() {
+        return vec![];
+    }
+    let mut file = file.unwrap();
+
+    let mut buffer = String::new();
+    if file.read_to_string(&mut buffer).is_err() {
+        return vec![];
+    }
+
+    serde_json::from_str::<Vec<ConnectHistoryInfo>>(&buffer).unwrap_or_default()
 }

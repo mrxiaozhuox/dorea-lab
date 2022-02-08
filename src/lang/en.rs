@@ -4,6 +4,7 @@ pub fn load(name: &str) -> String {
         "connect" => "connect",
 
         "connector" => "connector",
+        "connector:connect_history" => "Connect History",
         "connector:connect_prompt_message" => "Please fill ` Web-Serice ` connect information here.",
 
         "failed:connect_error" => "Database connect failed: ",

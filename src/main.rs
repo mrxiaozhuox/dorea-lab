@@ -74,7 +74,7 @@ fn app(cx: Scope) -> Element {
     cx.render(rsx! (
         style { [ include_str!("./assets/bulma.min.css") ] }
         // hidden the scroll bar
-        style { "html {{overflow-x: hidden; overflow-y: hidden;}}" }
+        style { "html::-webkit-scrollbar {{display: none;}}" }
 
         TopBar {}
         br {}
@@ -122,6 +122,31 @@ fn Connector(cx: Scope) -> Element {
     });
 
     let btn_disabled = use_state(&cx, || "false".to_string());
+
+
+    let connect_historys = storage::load_connect_history();
+    let connect_historys = connect_historys.iter().map(move |v| {
+        let str = format!("{} [ {} ] | {}", v.addr, v.username, v.date);
+
+        let conn_info = v.clone();
+        let set_addr = addr_state.1.clone();
+        let set_username = username_state.1.clone();
+        let set_password = password_state.1.clone();
+
+        rsx! {
+            li {
+                a {
+                    href: "#",
+                    onclick: move |_| {
+                        set_addr(conn_info.addr.clone());
+                        set_username(conn_info.username.clone());
+                        set_password(conn_info.password.clone());
+                    },
+                    strong { "{str}" }
+                }
+            }
+        }
+    });
 
     cx.render(rsx!(
         div {
@@ -234,6 +259,25 @@ fn Connector(cx: Scope) -> Element {
                 }
             }
         }
+
+        br {}
+
+        div {
+            class: "card",
+            div {
+                class: "card-content",
+                p {
+                    class: "subtitle is-5",
+                    [ load_text(&lang, "connector:connect_history") ]
+                }
+                style { ["#historys li { margin-bottom: 15px }"] }
+                ul {
+                    id: "historys",
+                    connect_historys
+                }
+            }
+        }
+
     ))
 }
 

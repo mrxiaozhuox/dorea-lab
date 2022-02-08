@@ -18,7 +18,7 @@ pub fn TopBar(cx: Scope) -> Element {
             
             onmousedown: |_| { win.drag(); },
 
-            class: "navbar is-primary",
+            class: "navbar is-primary is-fixed-top",
             role: "navigation",
 
             div {
@@ -81,5 +81,7 @@ pub fn TopBar(cx: Scope) -> Element {
             }
 
         }
+        br {}
+        br {}
     ))
 }

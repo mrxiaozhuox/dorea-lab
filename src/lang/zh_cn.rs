@@ -4,6 +4,7 @@ pub fn load(name: &str) -> String {
         "connect" => "连接",
 
         "connector" => "连接管理",
+        "connector:connect_history" => "连接历史",
         "connector:connect_prompt_message" => "请将用于 `Web-Serivce` 连接的信息填写至此。【URL、用户名、密码】",
         
         "failed:connect_error" => "数据库连接错误：",
