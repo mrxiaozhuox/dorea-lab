@@ -98,7 +98,8 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
 
     let (username, password) = (&client.account.username, &client.account.password);
 
-    storage::save_conenct_history(&addr, (username, password)).unwrap();
+    storage::save_conenct_history(&addr, (username, password)).unwrap();    
+
     cx.render(rsx!(
         div {
             "123",

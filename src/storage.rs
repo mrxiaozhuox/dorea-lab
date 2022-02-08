@@ -1,6 +1,11 @@
-use std::{env, fs::{create_dir_all, File}, path::PathBuf, io::{Write, Read}, str::FromStr};
+use std::{
+    env,
+    fs::{create_dir_all, File},
+    io::{Read, Write},
+    path::PathBuf,
+};
 
-use serde_json::{json, Value};
+use serde::{Deserialize, Serialize};
 
 fn current_dir() -> PathBuf {
     env::current_exe()
@@ -21,34 +26,38 @@ pub fn init_dir() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectHistoryInfo {
+    pub addr: String,
+    pub username: String,
+    pub password: String,
+    date: String,
+}
+
 pub fn save_conenct_history(addr: &str, account: (&str, &str)) -> anyhow::Result<()> {
     let current_path = current_dir();
-    
+
     let date = chrono::Local::now().date().to_string();
 
-    let structure = json!(
-        {
-            "addr": addr,
-            "username": account.0,
-            "password": account.1,
-            "date": date
-        }
-    );
+    let structure = ConnectHistoryInfo {
+        addr: addr.to_string(),
+        username: account.0.to_string(),
+        password: account.1.to_string(),
+        date,
+    };
 
-    if !current_path.join("data").join("connect_history.json").is_file() {
-        let mut file = File::create(current_path.join("data").join("connect_history.json"))?;
-        let content = json!([
-            structure
-        ]);
-        file.write_all(content.to_string().as_bytes())?;
-        return Ok(());
+    let mut content = vec![];
+    if current_path
+        .join("data")
+        .join("connect-history.json")
+        .is_file()
+    {
+        let mut file = File::open(current_path.join("data").join("connect-history.json"))?;
+        let mut buffer = String::new();
+        file.read_to_string(&mut buffer)?;
+
+        content = serde_json::from_str::<Vec<ConnectHistoryInfo>>(&buffer)?;
     }
-
-    let mut file = File::open(current_path.join("data").join("connect_history.json"))?;
-    let mut buffer = String::new();
-    file.read_to_string(&mut buffer)?;
-
-    let mut content = serde_json::from_str::<Vec<Value>>(&buffer)?;
 
     if content.len() >= 10 {
         content.remove(0);
@@ -56,7 +65,26 @@ pub fn save_conenct_history(addr: &str, account: (&str, &str)) -> anyhow::Result
 
     content.push(structure);
 
-    file.write_all(Value::Array(content).to_string().as_bytes())?;
+    let mut file = File::create(current_path.join("data").join("connect-history.json"))?;
+    file.write_all(
+        serde_json::to_string(&content)
+            .unwrap_or_else(|_| "[]".to_string())
+            .as_bytes(),
+    )?;
 
     Ok(())
+}
+
+pub fn load_connect_history() -> Vec<ConnectHistoryInfo> {
+    let current_path = current_dir();
+
+    if !current_path
+        .join("data")
+        .join("connect-history.json")
+        .is_file()
+    {
+        return vec![];
+    }
+
+    todo!()
 }
