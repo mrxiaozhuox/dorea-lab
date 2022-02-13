@@ -5,18 +5,18 @@ name = "dorea-cli"
 
 # Dioxus App Support Platform
 # desktop, web, mobile, ssr
-platforms = ["desktop"]
+default_platform = "desktop"
 
 # `build` & `serve` dist path
 out_dir = "dist"
+
+# resource (public) file folder
+public_dir = "public"
 
 [web.app]
 
 # HTML title tag content
 title = "dioxus | ⛺"
-
-# resource (public) file folder
-public_dir = "public"
 
 [web.watcher]
 

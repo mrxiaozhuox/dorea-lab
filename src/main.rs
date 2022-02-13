@@ -9,6 +9,7 @@ use std::process::exit;
 
 use comp::*;
 use dioxus::prelude::*;
+use dioxus_heroicons::{Icon, solid::Shape, IconButton};
 use dorea_wsc::{Account, Client};
 use fermi::{use_read, use_set, Atom};
 
@@ -94,15 +95,40 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
     let lang_shared = cx.consume_context::<LangShared>().unwrap();
     let lang = lang_shared.lang.clone();
 
-    let addr = client.client.addr();
-
-    let (username, password) = (&client.account.username, &client.account.password);
-
-    storage::save_conenct_history(&addr, (username, password)).unwrap();    
+    let account: Account = client.account.clone();
+    let client: Client = client.client.clone();
 
     cx.render(rsx!(
         div {
-            "123",
+            class: "card",
+            div {
+                class: "card-content",
+                nav {
+                    class: "breadcrumb has-succeeds-separator",
+                    ul {
+                        li { a { [ client.addr() ] } }
+                        li { a { [ account.username ] } }
+                        li { a { [ client.current ] } }
+                    }
+                }
+            }
+        }
+        br {}
+        div {
+            class: "card",
+            div {
+                class: "card-content",
+                div {
+                    class: "box",
+                    article {
+                        class: "media",
+                        div {
+                            class: "media-content",
+                            "123" 
+                        }
+                    }
+                }
+            }
         }
     ))
 }
@@ -110,8 +136,8 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
 #[inline_props]
 fn Connector(cx: Scope) -> Element {
     let addr_state = use_state(&cx, || "http://127.0.0.1:3451/".to_string());
-    let username_state = use_state(&cx, || "master".to_string());
-    let password_state = use_state(&cx, || "".to_string());
+    let username_state = use_state(&cx, || "lab".to_string());
+    let password_state = use_state(&cx, || "123456".to_string());
 
     let lang_shared = cx.consume_context::<LangShared>().unwrap();
     let lang = lang_shared.lang.clone();
@@ -234,6 +260,8 @@ fn Connector(cx: Scope) -> Element {
                                                 account,
                                             }));
     
+                                            storage::save_conenct_history(&addr, (&username, &password)).unwrap();  
+
                                             // 跳转到 管理页面
                                             set_route(RouterState {
                                                 path: "dashboard".to_string(),

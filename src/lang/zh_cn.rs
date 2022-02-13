@@ -7,6 +7,8 @@ pub fn load(name: &str) -> String {
         "connector:connect_history" => "连接历史",
         "connector:connect_prompt_message" => "请将用于 `Web-Serivce` 连接的信息填写至此。【URL、用户名、密码】",
         
+        "dashboard:current_db" => "当前库：",
+
         "failed:connect_error" => "数据库连接错误：",
         "failed:connect_not_found" => "数据库连接状态错误",
         

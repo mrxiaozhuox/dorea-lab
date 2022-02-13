@@ -22,7 +22,8 @@ struct RespStruct {
 pub struct Client {
     config: ClientOption,
     token: String,
-    current: String,
+    pub current: String,
+    usa_db: Option<Vec<String>>
 }
 
 impl Client {
@@ -41,6 +42,7 @@ impl Client {
             config: option.clone(),
             token: Default::default(),
             current: option.main_db,
+            usa_db: None,
         };
 
         if &obj.config.addr[obj.config.addr.len() - 1..] != "/" {
@@ -107,6 +109,14 @@ impl Client {
             && usa_db.len() >= 1
         {
             self.current = default_db;
+        }
+
+        let temp = serde_json::Value::Array(usa_db.clone()).to_string();
+        let temp = serde_json::from_str::<Vec<String>>(&temp);
+        if let Ok(v) = temp {
+            if v.len() > 0 {
+                self.usa_db = Some(v.clone());
+            }
         }
 
         // println!("current: {}", self.current);
