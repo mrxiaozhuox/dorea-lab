@@ -2,22 +2,12 @@
 
 mod comp;
 mod database;
-mod lang;
 mod storage;
-
-use std::process::exit;
 
 use comp::*;
 use dioxus::prelude::*;
-use dioxus_heroicons::{Icon, solid::Shape, IconButton};
 use dorea_wsc::{Account, Client};
 use fermi::{use_read, use_set, Atom};
-
-use crate::lang::load as load_text;
-
-struct LangShared {
-    lang: String,
-}
 
 struct RouterState {
     path: String,
@@ -37,8 +27,6 @@ static ROUTER: Atom<RouterState> = |_| RouterState {
 
 static CONNECT: Atom<Option<ConnectState>> = |_| None;
 
-const DEFAULT_LANGUAGE: &str = "zh_cn";
-
 fn main() {
     use dioxus::desktop::tao::dpi::LogicalSize;
     crate::storage::init_dir().unwrap();
@@ -56,10 +44,6 @@ fn app(cx: Scope) -> Element {
 
     let router = use_read(&cx, ROUTER);
     let client = use_read(&cx, CONNECT).clone();
-
-    let lang = DEFAULT_LANGUAGE.to_string();
-
-    cx.use_hook(|_| { cx.provide_context(LangShared { lang }) });
 
     let body = match router.path.as_str() {
         "connector" => rsx!( Connector {} ),
@@ -92,40 +76,25 @@ fn app(cx: Scope) -> Element {
 #[inline_props]
 fn Dashboard(cx: Scope, client: ConnectState) -> Element {
     
-    let lang_shared = cx.consume_context::<LangShared>().unwrap();
-    let lang = lang_shared.lang.clone();
-
     let account: Account = client.account.clone();
     let client: Client = client.client.clone();
 
+    // 默认情况下，Client 会自动连接一个拥有权限的库
+    // 但是我们不用管它，按照正常流程来，这里可以允许用户选择自己要访问的库
+    // 如果 usa_db 列表是空的，可以让用户直接搜索或创建，否则只显示允许使用的
     cx.render(rsx!(
         div {
             class: "card",
             div {
                 class: "card-content",
-                nav {
-                    class: "breadcrumb has-succeeds-separator",
-                    ul {
-                        li { a { [ client.addr() ] } }
-                        li { a { [ account.username ] } }
-                        li { a { [ client.current ] } }
-                    }
-                }
-            }
-        }
-        br {}
-        div {
-            class: "card",
-            div {
-                class: "card-content",
                 div {
-                    class: "box",
-                    article {
-                        class: "media",
-                        div {
-                            class: "media-content",
-                            "123" 
+                    class: "tabs is-centered",
+                    ul {
+                        li {
+                            class: "is-active",
+                            a { "Info" }
                         }
+                        li { a { "Databases" } }
                     }
                 }
             }
@@ -136,15 +105,13 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
 #[inline_props]
 fn Connector(cx: Scope) -> Element {
     let addr_state = use_state(&cx, || "http://127.0.0.1:3451/".to_string());
-    let username_state = use_state(&cx, || "lab".to_string());
-    let password_state = use_state(&cx, || "123456".to_string());
+    let username_state = use_state(&cx, || "master".to_string());
+    let password_state = use_state(&cx, || "".to_string());
 
-    let lang_shared = cx.consume_context::<LangShared>().unwrap();
-    let lang = lang_shared.lang.clone();
 
     // 这里用于更新 Connector 消息页面的内容
     let (message, message_setter) = use_state(&cx, || {
-        ("info".to_string(), load_text(&lang, "connector:connect_prompt_message"))
+        ("info", "Dorea Server Web-Service Connector".to_string())
     });
 
     let btn_disabled = use_state(&cx, || "false".to_string());
@@ -240,8 +207,6 @@ fn Connector(cx: Scope) -> Element {
 
                                 let set_route = use_set(&cx, ROUTER).clone();
                                 let set_connect = use_set(&cx, CONNECT).clone();
-
-                                let lang_info = lang_shared.lang.clone();
                                 
                                 let message_setter = message_setter.clone();
 
@@ -271,17 +236,16 @@ fn Connector(cx: Scope) -> Element {
                                         Err(e) => {
                                             // 这里会更换 message 为 error 并显示连接错误的内容
                                             let message = format!(
-                                                "{}[ {} ]", 
-                                                load_text(&lang_info, "failed:connect_error"),
+                                                "Connect Failed: [ {} ]", 
                                                 e
                                             );
-                                            message_setter(("danger".into(), message));
+                                            message_setter(("danger", message));
                                         }
                                     }
                                     btn_disabled_setter("false".into());
                                 })
                             },
-                            [ crate::lang::load(&lang, "connect") ]
+                            "connect"
                         }
                     }
                 }
@@ -296,7 +260,7 @@ fn Connector(cx: Scope) -> Element {
                 class: "card-content",
                 p {
                     class: "subtitle is-5",
-                    [ load_text(&lang, "connector:connect_history") ]
+                    "Connect History"
                 }
                 style { ["#historys li { margin-bottom: 15px }"] }
                 ul {
