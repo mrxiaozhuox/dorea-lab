@@ -3,6 +3,9 @@
 mod comp;
 mod database;
 mod storage;
+mod components;
+
+use std::collections::HashMap;
 
 use comp::*;
 use dioxus::prelude::*;
@@ -62,6 +65,7 @@ fn app(cx: Scope) -> Element {
         style { "html::-webkit-scrollbar {{display: none;}}" }
 
         TopBar {}
+
         br {}
 
         div {
@@ -96,6 +100,9 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
                         }
                         li { a { "Databases" } }
                     }
+                }
+                div {
+                    components::dashboard::Information {}
                 }
             }
         }

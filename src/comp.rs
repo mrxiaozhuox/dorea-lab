@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use dioxus::prelude::*;
 use dioxus_heroicons::{Icon, solid::Shape};
-use fermi::use_set;
+use fermi::{use_set, use_read};
 
-use crate::{ROUTER, RouterState};
+use crate::{ROUTER, CONNECT, RouterState};
 
 #[inline_props]
 pub fn TopBar(cx: Scope) -> Element {
@@ -10,6 +12,7 @@ pub fn TopBar(cx: Scope) -> Element {
     let win = dioxus::desktop::use_window(&cx);
 
     let set_route = use_set(&cx, ROUTER);
+    let connect = use_read(&cx, CONNECT);
 
     cx.render(rsx!(
         nav {
@@ -56,7 +59,13 @@ pub fn TopBar(cx: Scope) -> Element {
                         class: "navbar-item",
                         onmousedown: |e| { e.cancel_bubble(); },
                         onclick: move |_| {
-                            // test
+                            if connect.is_none() {
+                                return;
+                            }
+                            set_route(RouterState {
+                                path: "dashboard".to_string(),
+                                message: String::new(),
+                            });
                         },
                         "Dashboard"
                     }
