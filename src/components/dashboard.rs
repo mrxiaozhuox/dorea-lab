@@ -11,6 +11,7 @@ pub fn Information(cx: Scope) -> Element {
     let startup_time = use_state(&cx, String::new);
 
     let version_setter = version.1.clone();
+    let startup_timme_setter = version.1.clone();
     cx.spawn(async move {
         let mut client = connect.client.clone();
         let v = client
@@ -18,6 +19,8 @@ pub fn Information(cx: Scope) -> Element {
             .await
             .unwrap_or_else(|_| String::from("Unknown"));
         version_setter(v);
+        let v = client.execute("info server-startup-time").await.unwrap_or_else(|_| String::from("Unknown"));
+        println!("{:?}", v);
     });
 
     cx.render(rsx!(
@@ -45,7 +48,7 @@ pub fn Information(cx: Scope) -> Element {
                     },
                     p {
                         class: "title",
-                        "2022-02-14 20:31:33"
+                        "{startup_time.0}"
                     }
                 }
             }

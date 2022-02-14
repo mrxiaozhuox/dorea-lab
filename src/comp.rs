@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use dioxus::prelude::*;
 use dioxus_heroicons::{Icon, solid::Shape};
 use fermi::{use_set, use_read};
@@ -76,7 +74,7 @@ pub fn TopBar(cx: Scope) -> Element {
                         class: "navbar-item",
                         onmousedown: |e| { e.cancel_bubble(); },
                         onclick: |_| {
-                            win.minimize(true);
+                            win.set_minimized(true);
                         },
                         Icon {
                             icon: Shape::Minus
