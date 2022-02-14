@@ -1,3 +1,4 @@
+use chrono::TimeZone;
 use dioxus::prelude::*;
 use fermi::use_read;
 
@@ -10,18 +11,26 @@ pub fn Information(cx: Scope) -> Element {
     let version = use_state(&cx, String::new);
     let startup_time = use_state(&cx, String::new);
 
-    let version_setter = version.1.clone();
-    let startup_timme_setter = version.1.clone();
-    cx.spawn(async move {
-        let mut client = connect.client.clone();
-        let v = client
-            .execute("info version")
-            .await
-            .unwrap_or_else(|_| String::from("Unknown"));
-        version_setter(v);
-        let v = client.execute("info server-startup-time").await.unwrap_or_else(|_| String::from("Unknown"));
-        println!("{:?}", v);
-    });
+    if version.0.is_empty() {
+        let version_setter = version.1.clone();
+        let startup_timme_setter = startup_time.1.clone();
+        cx.spawn(async move {
+            let mut client = connect.client.clone();
+            let version = client
+                .execute("info version")
+                .await
+                .unwrap_or_else(|_| String::from("Unknown"));
+    
+            let temp = client
+                .execute("info server-startup-time")
+                .await
+                .unwrap_or_else(|_| String::from("Unknown"));
+            let dt = chrono::Utc.timestamp(temp.parse().unwrap_or(0), 0);
+    
+            version_setter(version);
+            startup_timme_setter(dt.date().format("%Y-%m-%d").to_string());
+        });
+    }
 
     cx.render(rsx!(
         div {
@@ -40,7 +49,7 @@ pub fn Information(cx: Scope) -> Element {
                 }
             }
             div {
-                class: "level-item hash-text-centered",
+                class: "level-item has-text-centered",
                 div {
                     p {
                         class: "heading",
@@ -49,6 +58,19 @@ pub fn Information(cx: Scope) -> Element {
                     p {
                         class: "title",
                         "{startup_time.0}"
+                    }
+                }
+            }
+            div {
+                class: "level-item has-text-centered",
+                div {
+                    p {
+                        class: "heading",
+                        "Loaded Database"
+                    }
+                    p {
+                        class: "title",
+                        "50"
                     }
                 }
             }
