@@ -17,17 +17,43 @@ pub fn Information(cx: Scope) -> Element {
 
     let current_user = connect.account.username;
 
+    let usa_db = connect.client.usa_db.clone();
     let loaded_db_list = loaded_db.0.iter().map(|v| {
+        let icon = if usa_db.is_none() {
+            rsx! {
+                Icon {
+                    icon: Shape::ShieldCheck,
+                    fill: "green",
+                }
+            }
+        } else {
+            let t = usa_db.as_ref().unwrap();
+            if t.contains(v) {
+                rsx! {
+                    Icon {
+                        icon: Shape::ShieldCheck,
+                        fill: "green",
+                    }
+                }
+            } else {
+                rsx! {
+                    Icon {
+                        icon: Shape::ShieldExclamation,
+                        fill: "red",
+                    }
+                }
+            }
+        };
+
         rsx! (
            a {
-               class: "panel-block",
-               span {
-                   class: "panel-icon",
-                   Icon {
-                       icon: Shape::BookmarkAlt,
-                   }
-               }
-               strong { "{v}" }
+                class: "panel-block is-warn",
+                span {
+                    style: "float: right",
+                    class: "panel-icon",
+                    icon
+                }
+                strong { "{v}" }
            }
         )
     });

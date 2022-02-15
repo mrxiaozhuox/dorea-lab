@@ -23,7 +23,7 @@ pub struct Client {
     config: ClientOption,
     token: String,
     pub current: String,
-    usa_db: Option<Vec<String>>
+    pub usa_db: Option<Vec<String>>
 }
 
 impl Client {
