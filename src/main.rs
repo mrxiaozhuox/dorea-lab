@@ -5,8 +5,6 @@ mod database;
 mod storage;
 mod components;
 
-use std::collections::HashMap;
-
 use comp::*;
 use dioxus::prelude::*;
 use dorea_wsc::{Account, Client};
@@ -37,7 +35,7 @@ fn main() {
         cfg.with_window(|w| {
             w.with_title("Dorea Lab | ⛺")
                 .with_resizable(true)
-                .with_inner_size(LogicalSize::new(1050.0, 650.0))
+                .with_inner_size(LogicalSize::new(1150.0, 750.0))
                 .with_decorations(false)
         })
     });
@@ -80,8 +78,8 @@ fn app(cx: Scope) -> Element {
 #[inline_props]
 fn Dashboard(cx: Scope, client: ConnectState) -> Element {
     
-    let account: Account = client.account.clone();
-    let client: Client = client.client.clone();
+    let _account: Account = client.account.clone();
+    let _client: Client = client.client.clone();
 
     // 默认情况下，Client 会自动连接一个拥有权限的库
     // 但是我们不用管它，按照正常流程来，这里可以允许用户选择自己要访问的库
@@ -96,13 +94,31 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
                     ul {
                         li {
                             class: "is-active",
-                            a { "Info" }
+                            a { "Information" }
                         }
                         li { a { "Databases" } }
                     }
                 }
                 div {
                     components::dashboard::Information {}
+                }
+            }
+        }
+        footer {
+            class: "footer",
+            div {
+                class: "content has-text-centered",
+                p {
+                    "Powered by "
+                    a {
+                        href: "https://dioxuslabs.com/",
+                        "Dioxus"
+                    }
+                    " & "
+                    a {
+                        href: "https://dorea.mrxzx.info/",
+                        "DoreaDB"
+                    }
                 }
             }
         }
