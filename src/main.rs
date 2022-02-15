@@ -81,6 +81,10 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
     let _account: Account = client.account.clone();
     let _client: Client = client.client.clone();
 
+    let info_class = use_state(&cx, || String::from("is-active"));
+    let dbls_class = use_state(&cx, String::new);
+    let tab_current = use_state(&cx, || String::from("info"));
+
     // 默认情况下，Client 会自动连接一个拥有权限的库
     // 但是我们不用管它，按照正常流程来，这里可以允许用户选择自己要访问的库
     // 如果 usa_db 列表是空的，可以让用户直接搜索或创建，否则只显示允许使用的
@@ -93,10 +97,35 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
                     class: "tabs is-centered",
                     ul {
                         li {
-                            class: "is-active",
+                            class: "{info_class.0}",
+                            onclick: move |_| {
+
+                                if !info_class.0.is_empty() {
+                                    return;
+                                }
+
+                                let info_class_setter = info_class.1.clone();
+                                let dbls_class_setter = dbls_class.1.clone();
+                                dbls_class_setter(String::new());
+                                info_class_setter(String::from("is-active"));
+                            },
                             a { "Information" }
                         }
-                        li { a { "Databases" } }
+                        li {
+                            class: "{dbls_class.0}",
+                            onclick: move |_| {
+                                
+                                if !dbls_class.0.is_empty() {
+                                    return;
+                                }
+                                
+                                let info_class_setter = info_class.1.clone();
+                                let dbls_class_setter = dbls_class.1.clone();
+                                dbls_class_setter(String::from("is-active"));
+                                info_class_setter(String::new());
+                            },
+                            a { "Databases" }
+                        }
                     }
                 }
                 div {
