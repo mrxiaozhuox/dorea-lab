@@ -83,7 +83,11 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
 
     let info_class = use_state(&cx, || String::from("is-active"));
     let dbls_class = use_state(&cx, String::new);
-    let tab_current = use_state(&cx, || String::from("info"));
+    let current_tab = use_state(&cx, move || {
+        ("info", info_class.1.clone())
+    });
+
+    let current_tab_name = current_tab.0.0;
 
     // 默认情况下，Client 会自动连接一个拥有权限的库
     // 但是我们不用管它，按照正常流程来，这里可以允许用户选择自己要访问的库
@@ -104,10 +108,13 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
                                     return;
                                 }
 
-                                let info_class_setter = info_class.1.clone();
-                                let dbls_class_setter = dbls_class.1.clone();
-                                dbls_class_setter(String::new());
-                                info_class_setter(String::from("is-active"));
+                                let class_setter = info_class.1.clone();
+                                let current_tab_setter = current_tab.0.1.clone();
+                                current_tab_setter(String::new());
+                                let current_tab_setter = current_tab.1.clone();
+                                current_tab_setter(("info", class_setter.clone()));
+
+                                class_setter(String::from("is-active"));
                             },
                             a { "Information" }
                         }
@@ -118,18 +125,27 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
                                 if !dbls_class.0.is_empty() {
                                     return;
                                 }
-                                
-                                let info_class_setter = info_class.1.clone();
-                                let dbls_class_setter = dbls_class.1.clone();
-                                dbls_class_setter(String::from("is-active"));
-                                info_class_setter(String::new());
+
+                                let class_setter = dbls_class.1.clone();
+                                let current_tab_setter = current_tab.0.1.clone();
+                                current_tab_setter(String::new());
+                                let current_tab_setter = current_tab.1.clone();
+                                current_tab_setter(("dbls", class_setter.clone()));
+
+                                class_setter(String::from("is-active"));
                             },
                             a { "Databases" }
                         }
                     }
                 }
                 div {
-                    components::dashboard::Information {}
+                    if current_tab_name == "info" {
+                        rsx! { components::dashboard::Information {} }
+                    } else if current_tab_name == "dbls" {
+                        rsx! { components::dashboard::Databses {} }
+                    } else {
+                        rsx! { "unknown component" }
+                    }
                 }
             }
         }

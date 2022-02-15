@@ -194,3 +194,21 @@ pub fn Information(cx: Scope) -> Element {
         }
     ))
 }
+
+#[inline_props]
+pub fn Databses(cx: Scope) -> Element {
+    cx.render(rsx! {
+        table {
+            class: "table is-bordered is-hoverable is-striped is-fullwidth",
+            thead {
+                tr {
+                    th { "Name" }
+                    th { "Index Number" }
+                    th { "Database State" }
+                    th { "Account State" }
+                    th { "Operation" }
+                }
+            }
+        }
+    })
+}
