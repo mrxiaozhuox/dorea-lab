@@ -162,7 +162,7 @@ fn Dashboard(cx: Scope, client: ConnectState) -> Element {
                     " & "
                     a {
                         href: "https://dorea.mrxzx.info/",
-                        "DoreaDB"
+                        "Dorea"
                     }
                 }
             }
