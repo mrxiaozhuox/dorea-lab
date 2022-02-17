@@ -197,6 +197,22 @@ pub fn Information(cx: Scope) -> Element {
 
 #[inline_props]
 pub fn Databses(cx: Scope) -> Element {
+    let connect = use_read(&cx, CONNECT).clone().unwrap();
+
+    let usable_db_list = connect.client.usa_db.clone();
+    let loaded_db_list = use_state(&cx, Vec::<String>::new);
+
+    if loaded_db_list.0.is_empty() {
+        let loaded_db_setter = loaded_db_list.1.clone();
+        cx.spawn(async move {
+            let mut client = connect.client.clone();
+            let v = client
+                .execute("db list")
+                .await
+                .unwrap_or_else(|_| String::from("[]"));
+        });
+    }
+
     cx.render(rsx! {
         table {
             class: "table is-bordered is-hoverable is-striped is-fullwidth",
@@ -209,6 +225,7 @@ pub fn Databses(cx: Scope) -> Element {
                     th { "Operation" }
                 }
             }
+            tbody {  }
         }
     })
 }
