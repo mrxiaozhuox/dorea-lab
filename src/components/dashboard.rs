@@ -206,10 +206,18 @@ pub fn Databses(cx: Scope) -> Element {
         let loaded_db_setter = loaded_db_list.1.clone();
         cx.spawn(async move {
             let mut client = connect.client.clone();
-            let v = client
+            let list = client
                 .execute("db list")
                 .await
                 .unwrap_or_else(|_| String::from("[]"));
+            let loaded_ls = doson::DataValue::from(&list).as_list().unwrap_or_default();
+            let mut res = vec![];
+            for item in loaded_ls {
+                if let Some(v) = item.as_string() {
+                    res.push(v);
+                }
+            }
+            loaded_db_setter(res);
         });
     }
 
