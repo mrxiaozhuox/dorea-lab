@@ -200,12 +200,19 @@ pub fn Databses(cx: Scope) -> Element {
     let connect = use_read(&cx, CONNECT).clone().unwrap();
 
     let usable_db_list = connect.client.usa_db.clone();
-    let loaded_db_list = use_state(&cx, Vec::<String>::new);
+    let display_list = use_state(&cx, Vec::<(String, bool)>::new);
 
-    if loaded_db_list.0.is_empty() {
-        let loaded_db_setter = loaded_db_list.1.clone();
+    let display_rsx = display_list.0.iter().map(|value| {
+        
+    });
+
+    if display_list.0.is_empty() {
+        let display_list_setter = display_list.1.clone();
         cx.spawn(async move {
+
             let mut client = connect.client.clone();
+            let mut usa_db_list = usable_db_list.clone().unwrap_or_default();
+
             let list = client
                 .execute("db list")
                 .await
@@ -214,10 +221,20 @@ pub fn Databses(cx: Scope) -> Element {
             let mut res = vec![];
             for item in loaded_ls {
                 if let Some(v) = item.as_string() {
-                    res.push(v);
+                    res.push((v.clone(), usa_db_list.contains(&v)));
                 }
             }
-            loaded_db_setter(res);
+
+            for item in usa_db_list {
+                if res.contains(&(item.clone(), true)) {
+                    continue;
+                }
+                res.push((item, true));
+            }
+
+            println!("{:?}", res);
+
+            display_list_setter(res);
         });
     }
 
