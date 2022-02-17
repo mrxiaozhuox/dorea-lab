@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use dioxus_heroicons::{solid::Shape, Icon};
 use fermi::use_read;
 
-use crate::CONNECT;
+use crate::{CONNECT, database::{db_list_info, DatabaseInfo}};
 
 #[inline_props]
 pub fn Information(cx: Scope) -> Element {
@@ -200,41 +200,58 @@ pub fn Databses(cx: Scope) -> Element {
     let connect = use_read(&cx, CONNECT).clone().unwrap();
 
     let usable_db_list = connect.client.usa_db.clone();
-    let display_list = use_state(&cx, Vec::<(String, bool)>::new);
+    let display_list = use_state(&cx, Vec::<DatabaseInfo>::new);
 
     let display_rsx = display_list.0.iter().map(|value| {
-        
+        rsx! {
+            tr {
+                th {
+                    "{value.name}"
+                }
+                td {
+                    "{value.index_number}"
+                }
+                td {
+                    "{value.database_state}"
+                }
+                td {
+                    if value.account_state {
+                        rsx! {
+                            Icon {
+                                icon: Shape::ShieldCheck,
+                                size: 14,
+                                fill: "green",
+                            }
+                            strong { "Usable" }
+                        }
+                    } else {
+                        rsx! {
+                            Icon {
+                                icon: Shape::ShieldExclamation,
+                                size: 14,
+                                fill: "red",
+                            }
+                            strong { "Disabled" }
+                        }
+                    }
+                }
+                td {
+
+                }
+            }
+        }
     });
 
     if display_list.0.is_empty() {
         let display_list_setter = display_list.1.clone();
         cx.spawn(async move {
 
-            let mut client = connect.client.clone();
-            let mut usa_db_list = usable_db_list.clone().unwrap_or_default();
+            let client = connect.client.clone();
+            let usa_db_list = usable_db_list.clone();
 
-            let list = client
-                .execute("db list")
-                .await
-                .unwrap_or_else(|_| String::from("[]"));
-            let loaded_ls = doson::DataValue::from(&list).as_list().unwrap_or_default();
-            let mut res = vec![];
-            for item in loaded_ls {
-                if let Some(v) = item.as_string() {
-                    res.push((v.clone(), usa_db_list.contains(&v)));
-                }
-            }
+            let list = db_list_info(client, usa_db_list).await;
 
-            for item in usa_db_list {
-                if res.contains(&(item.clone(), true)) {
-                    continue;
-                }
-                res.push((item, true));
-            }
-
-            println!("{:?}", res);
-
-            display_list_setter(res);
+            display_list_setter(list);
         });
     }
 
@@ -250,7 +267,7 @@ pub fn Databses(cx: Scope) -> Element {
                     th { "Operation" }
                 }
             }
-            tbody {  }
+            tbody { display_rsx }
         }
     })
 }
