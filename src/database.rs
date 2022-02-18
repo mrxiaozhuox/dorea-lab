@@ -51,3 +51,11 @@ pub async fn db_list_info(
 
     result
 }
+
+pub async fn unlock_db(mut client: Client, name: &str) -> anyhow::Result<()> {
+    let res = client.execute(&format!("db unlock {}", name)).await?;
+    if &res == "Successful." {
+        return Ok(())
+    }
+    Err(anyhow::anyhow!(res))
+}

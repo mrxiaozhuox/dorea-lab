@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use dioxus_heroicons::{solid::Shape, Icon};
 use fermi::use_read;
 
-use crate::{CONNECT, database::{db_list_info, DatabaseInfo}};
+use crate::{CONNECT, database::{db_list_info, DatabaseInfo, self}};
 
 #[inline_props]
 pub fn Information(cx: Scope) -> Element {
@@ -202,7 +202,13 @@ pub fn Databses(cx: Scope) -> Element {
     let usable_db_list = connect.client.usa_db.clone();
     let display_list = use_state(&cx, Vec::<DatabaseInfo>::new);
 
+    let display_connect = connect.clone();
     let display_rsx = display_list.0.iter().map(|value| {
+
+        let unload_title = if value.database_state == "Locked" { "解锁" } else { "卸载" };
+
+        let connect = display_connect.clone();
+
         rsx! {
             tr {
                 th {
@@ -236,7 +242,24 @@ pub fn Databses(cx: Scope) -> Element {
                     }
                 }
                 td {
+                    button {
+                        class: "button is-warn is-small",
+                        style: "height: 25px",
+                        "current-state": "{value.database_state}",
+                        onclick: move |_| {
+                            let client = connect.client.clone();
+                            let current_state: &str = &value.database_state.to_lowercase();
+                            if current_state == "locked" {
+                                // 这里做解锁操作，当一个库被锁定时，我们不能直接对它进行卸载
+                                // 所以说，当库为锁定状态，我们先对它进行解锁。
+                                let res = database::unlock_db(client, &value.name);
+                            } else {
+                                // 这里是卸载操作，卸载操作依然会检查是否允许被卸载
 
+                            }
+                        },
+                        "{unload_title}"
+                    }
                 }
             }
         }
