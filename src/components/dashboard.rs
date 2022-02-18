@@ -3,7 +3,10 @@ use dioxus::prelude::*;
 use dioxus_heroicons::{solid::Shape, Icon};
 use fermi::use_read;
 
-use crate::{CONNECT, database::{db_list_info, DatabaseInfo, self}};
+use crate::{
+    database::{self, db_list_info, DatabaseInfo},
+    CONNECT,
+};
 
 #[inline_props]
 pub fn Information(cx: Scope) -> Element {
@@ -199,15 +202,23 @@ pub fn Information(cx: Scope) -> Element {
 pub fn Databses(cx: Scope) -> Element {
     let connect = use_read(&cx, CONNECT).clone().unwrap();
 
+    let need_reload = use_state(&cx, || true);
+
     let usable_db_list = connect.client.usa_db.clone();
     let display_list = use_state(&cx, Vec::<DatabaseInfo>::new);
 
     let display_connect = connect.clone();
+    let need_reload_setter = need_reload.1.clone();
     let display_rsx = display_list.0.iter().map(|value| {
-
-        let unload_title = if value.database_state == "Locked" { "解锁" } else { "卸载" };
+        let unload_title = if value.database_state == "Locked" {
+            "Unlock"
+        } else {
+            "Lock"
+        };
 
         let connect = display_connect.clone();
+
+        let need_reload_setter = need_reload_setter.clone();
 
         rsx! {
             tr {
@@ -228,7 +239,7 @@ pub fn Databses(cx: Scope) -> Element {
                                 size: 14,
                                 fill: "green",
                             }
-                            strong { "Usable" }
+                            strong { "Authorised" }
                         }
                     } else {
                         rsx! {
@@ -237,25 +248,39 @@ pub fn Databses(cx: Scope) -> Element {
                                 size: 14,
                                 fill: "red",
                             }
-                            strong { "Disabled" }
+                            strong { "Unauthorised" }
                         }
                     }
                 }
                 td {
                     button {
-                        class: "button is-warn is-small",
+                        class: "button is-warning is-small",
                         style: "height: 25px",
                         "current-state": "{value.database_state}",
                         onclick: move |_| {
+                            let db_info = value.clone();
                             let client = connect.client.clone();
                             let current_state: &str = &value.database_state.to_lowercase();
+                            let need_reload_setter = need_reload_setter.clone();
                             if current_state == "locked" {
                                 // 这里做解锁操作，当一个库被锁定时，我们不能直接对它进行卸载
                                 // 所以说，当库为锁定状态，我们先对它进行解锁。
-                                let _res = database::unlock_db(client, &value.name);
+                                cx.spawn(async move {
+                                    let res = database::unlock_db(client, &db_info.name).await;
+                                    if let Err(e) = res {
+                                        // println!("{}", e);
+                                    }
+                                    need_reload_setter(true);
+                                });
                             } else {
-                                // 这里是卸载操作，卸载操作依然会检查是否允许被卸载
-
+                                // 这里是锁定操作
+                                cx.spawn(async move {
+                                    let res = database::lock_db(client, &db_info.name).await;
+                                    if let Err(e) = res {
+                                        // println!("{}", e);
+                                    }
+                                    need_reload_setter(true);
+                                });
                             }
                         },
                         "{unload_title}"
@@ -265,20 +290,56 @@ pub fn Databses(cx: Scope) -> Element {
         }
     });
 
-    if display_list.0.is_empty() {
+    if display_list.0.is_empty() || *need_reload.0 {
         let display_list_setter = display_list.1.clone();
+        let need_reload_setter = need_reload.1.clone();
         cx.spawn(async move {
-
             let client = connect.client.clone();
             let usa_db_list = usable_db_list.clone();
 
-            let list = db_list_info(client, usa_db_list).await;
+            let mut list = db_list_info(client, usa_db_list).await;
+
+            list.sort_by(|a, b| {
+                let (a_name, b_name) = (a.name.clone(), b.name.clone());
+                
+                let mut a_weight = 0;
+                let mut b_weight = 0;
+
+                for c in a_name.chars() {
+                    a_weight += c as u32;
+                }
+
+                for c in b_name.chars() {
+                    b_weight += c as u32;
+                }
+
+                a_weight.cmp(&b_weight)
+            });
 
             display_list_setter(list);
+            need_reload_setter(false);
         });
     }
 
     cx.render(rsx! {
+        div {
+            class: "filed has-addons",
+            style: "float: right",
+            p {
+                class: "control",
+                button {
+                    class: "button is-small",
+                    onclick: move |_| {
+                        let need_reload_setter = need_reload.1.clone();
+                        need_reload_setter(true);
+                    },
+                    Icon {
+                        icon: Shape::Refresh,
+                    }
+                }
+            }
+            br {}
+        }
         table {
             class: "table is-bordered is-hoverable is-striped is-fullwidth",
             thead {

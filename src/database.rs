@@ -59,3 +59,11 @@ pub async fn unlock_db(mut client: Client, name: &str) -> anyhow::Result<()> {
     }
     Err(anyhow::anyhow!(res))
 }
+
+pub async fn lock_db(mut client: Client, name: &str) -> anyhow::Result<()> {
+    let res = client.execute(&format!("db lock {}", name)).await?;
+    if &res == "Successful." {
+        return Ok(())
+    }
+    Err(anyhow::anyhow!(res))
+}
