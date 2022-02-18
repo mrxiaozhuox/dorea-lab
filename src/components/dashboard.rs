@@ -252,7 +252,7 @@ pub fn Databses(cx: Scope) -> Element {
                             if current_state == "locked" {
                                 // 这里做解锁操作，当一个库被锁定时，我们不能直接对它进行卸载
                                 // 所以说，当库为锁定状态，我们先对它进行解锁。
-                                let res = database::unlock_db(client, &value.name);
+                                let _res = database::unlock_db(client, &value.name);
                             } else {
                                 // 这里是卸载操作，卸载操作依然会检查是否允许被卸载
 
