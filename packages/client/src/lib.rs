@@ -23,7 +23,8 @@ pub struct Client {
     config: ClientOption,
     token: String,
     pub current: String,
-    pub usa_db: Option<Vec<String>>
+    pub usa_db: Option<Vec<String>>,
+    pub cls_command: Vec<String>
 }
 
 impl Client {
@@ -43,6 +44,7 @@ impl Client {
             token: Default::default(),
             current: option.main_db,
             usa_db: None,
+            cls_command: Default::default(),
         };
 
         if &obj.config.addr[obj.config.addr.len() - 1..] != "/" {
@@ -118,6 +120,13 @@ impl Client {
                 self.usa_db = Some(v.clone());
             }
         }
+
+        let temp = values.get("cls_command").unwrap().as_array().unwrap().clone();
+        let mut cls_command = vec![];
+        for item in temp {
+            cls_command.push(item.as_str().unwrap().to_string());
+        }
+        self.cls_command = cls_command;
 
         // println!("current: {}", self.current);
 
