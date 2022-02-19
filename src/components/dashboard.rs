@@ -267,7 +267,7 @@ pub fn Databses(cx: Scope) -> Element {
                                 // 所以说，当库为锁定状态，我们先对它进行解锁。
                                 cx.spawn(async move {
                                     let res = database::unlock_db(client, &db_info.name).await;
-                                    if let Err(e) = res {
+                                    if let Err(_e) = res {
                                         // println!("{}", e);
                                     }
                                     need_reload_setter(true);
@@ -276,7 +276,7 @@ pub fn Databses(cx: Scope) -> Element {
                                 // 这里是锁定操作
                                 cx.spawn(async move {
                                     let res = database::lock_db(client, &db_info.name).await;
-                                    if let Err(e) = res {
+                                    if let Err(_e) = res {
                                         // println!("{}", e);
                                     }
                                     need_reload_setter(true);
