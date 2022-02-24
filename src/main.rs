@@ -29,6 +29,11 @@ static ROUTER: Atom<RouterState> = |_| RouterState {
 static CONNECT: Atom<Option<ConnectState>> = |_| None;
 
 fn main() {
+
+    std::panic::set_hook(Box::new(|info| {
+        println!("{}", info);
+    }));
+
     use dioxus::desktop::tao::dpi::LogicalSize;
     crate::storage::init_dir().unwrap();
     dioxus::desktop::launch_cfg(app, |cfg| {
